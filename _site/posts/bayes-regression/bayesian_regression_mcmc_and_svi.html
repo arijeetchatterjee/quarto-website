@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.335">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="dcterms.date" content="2023-04-08">
+<meta name="description" content="An example of Bayesian regression adapted from a NumPyro tutorial. In this tutorial I use Pyro. This tutorial was developed as an open source contribution for Pyro.">
+
+<title>Arijeet Chatterjee - Bayesian Regression Using Pyro</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Arijeet Chatterjee</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html">
+ <span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../blog.html">
+ <span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Bayesian Regression Using Pyro</h1>
+                  <div>
+        <div class="description">
+          <p>An example of Bayesian regression adapted from a NumPyro tutorial. In this tutorial I use Pyro. This tutorial was developed as an open source contribution for Pyro.</p>
+        </div>
+      </div>
+                          <div class="quarto-categories">
+                <div class="quarto-category">Bayesian Regression</div>
+                <div class="quarto-category">Pyro</div>
+              </div>
+                  </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">April 8, 2023</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#bayesian-regression-using-pyro" id="toc-bayesian-regression-using-pyro" class="nav-link active" data-scroll-target="#bayesian-regression-using-pyro">Bayesian Regression Using Pyro</a>
+  <ul class="collapse">
+  <li><a href="#tutorial-outline" id="toc-tutorial-outline" class="nav-link" data-scroll-target="#tutorial-outline">Tutorial Outline:</a></li>
+  <li><a href="#dataset" id="toc-dataset" class="nav-link" data-scroll-target="#dataset"></a><a id="Dataset" class="nav-link" data-scroll-target="undefined">Dataset</a></li>
+  <li><a href="#regression-model-to-predict-divorce-rate" id="toc-regression-model-to-predict-divorce-rate" class="nav-link" data-scroll-target="#regression-model-to-predict-divorce-rate"></a><a id="#Regression-Model-to-Predict-Divorce-Rate" class="nav-link" data-scroll-target="undefined">Regression Model to Predict Divorce Rate</a>
+  <ul class="collapse">
+  <li><a href="#model-1-predictor---marriage-rate" id="toc-model-1-predictor---marriage-rate" class="nav-link" data-scroll-target="#model-1-predictor---marriage-rate"></a><a id="Model-1:-Predictor---Marriage-Rate" class="nav-link" data-scroll-target="undefined">Model 1: Predictor - Marriage Rate</a></li>
+  <li><a href="#posterior-predictive-distribution" id="toc-posterior-predictive-distribution" class="nav-link" data-scroll-target="#posterior-predictive-distribution"></a><a id="Posterior-Predictive-Distribution" class="nav-link" data-scroll-target="undefined">Posterior Predictive Distribution</a></li>
+  <li><a href="#model-2-predictor---median-age-of-marriage" id="toc-model-2-predictor---median-age-of-marriage" class="nav-link" data-scroll-target="#model-2-predictor---median-age-of-marriage"></a><a id="Model-2:-Predictor---Median-Age-of-Marriage" class="nav-link" data-scroll-target="undefined">Model 2: Predictor - Median Age of Marriage</a></li>
+  <li><a href="#model-3-predictor---marriage-rate-and-median-age-of-marriage" id="toc-model-3-predictor---marriage-rate-and-median-age-of-marriage" class="nav-link" data-scroll-target="#model-3-predictor---marriage-rate-and-median-age-of-marriage"></a><a id="Model-3:-Predictor---Marriage-Rate-and-Median-Age-of-Marriage" class="nav-link" data-scroll-target="undefined">Model 3: Predictor - Marriage Rate and Median Age of Marriage</a></li>
+  <li><a href="#divorce-rate-residuals-by-state" id="toc-divorce-rate-residuals-by-state" class="nav-link" data-scroll-target="#divorce-rate-residuals-by-state"></a><a id="Divorce-Rate-Residuals-by-State" class="nav-link" data-scroll-target="undefined">Divorce Rate Residuals by State</a></li>
+  </ul></li>
+  <li><a href="#regression-model-with-measurement-error" id="toc-regression-model-with-measurement-error" class="nav-link" data-scroll-target="#regression-model-with-measurement-error"></a><a id="Regression-Model-with-Measurement-Error" class="nav-link" data-scroll-target="undefined">Regression Model with Measurement Error</a>
+  <ul class="collapse">
+  <li><a href="#effect-of-incorporating-measurement-noise-on-residuals" id="toc-effect-of-incorporating-measurement-noise-on-residuals" class="nav-link" data-scroll-target="#effect-of-incorporating-measurement-noise-on-residuals"></a><a id="Effect-of-Incorporating-Measurement-Noise-on-Residuals" class="nav-link" data-scroll-target="undefined">Effect of Incorporating Measurement Noise on Residuals</a></li>
+  </ul></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"></a><a id="References" class="nav-link" data-scroll-target="undefined">References</a><a class="nav-link" data-scroll-target="undefined"></a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+<section id="bayesian-regression-using-pyro" class="level1">
+<h1>Bayesian Regression Using Pyro</h1>
+<p>In this tutorial, we will explore how to do bayesian regression in Pyro, using a simple example adapted from Statistical Rethinking [<a href="#References">1</a>]. In particular, we would like to explore the following:</p>
+<ul>
+<li>Write a simple model using the sample Pyro primitive.</li>
+<li>Run inference using MCMC in Pyro, in particular, using the No U-Turn Sampler (NUTS) to get a posterior distribution over our regression parameters of interest. We also show an example of inference using Pyro’s SVI.</li>
+<li>Learn about inference utilities such as <code>Predictive</code> and <code>log_likelihood</code>.</li>
+<li>Learn how we can use effect-handlers in Pyro to generate execution traces from the model, condition on sample statements, etc., and use this to implement various utilities that will be useful for MCMC. e.g.&nbsp;computing model log likelihood, generating empirical distribution over the posterior predictive, etc.</li>
+</ul>
+<section id="tutorial-outline" class="level2">
+<h2 class="anchored" data-anchor-id="tutorial-outline">Tutorial Outline:</h2>
+<ol type="1">
+<li><a href="#Dataset">Dataset</a></li>
+<li><a href="#Regression-Model-to-Predict-Divorce-Rate">Regression Model to Predict Divorce Rate</a>
+<ul>
+<li><a href="#Model-1:-Predictor---Marriage-Rate">Model-1: Predictor-Marriage Rate</a>
+<ul>
+<li><a href="#Posterior-Distribution-over-the-Regression-Parameters">Posterior Distribution over the Regression Parameters</a></li>
+<li><a href="#Prior-Predictive-Distribution">Prior Predictive Distribution</a></li>
+<li><a href="#Posterior-Predictive-Distribution">Posterior Predictive Distribution</a></li>
+<li><a href="#Predictive-Utility-With-Effect-Handlers">Predictive Utility With Effect Handlers</a></li>
+<li><a href="#Model-Predictive-Density">Model Predictive Density</a></li>
+<li><a href="#SVI">Regression with Pyro’s Stochastic Variational Inference (SVI)</a></li>
+</ul></li>
+<li><a href="#Model-2:-Predictor---Median-Age-of-Marriage">Model-2: Predictor-Median Age of Marriage</a></li>
+<li><a href="#Model-3:-Predictor---Marriage-Rate-and-Median-Age-of-Marriage">Model-3: Predictor-Marriage Rate and Median Age of Marriage</a></li>
+<li><a href="#Divorce-Rate-Residuals-by-State">Divorce Rate Residuals by State</a></li>
+</ul></li>
+<li><a href="#Regression-Model-with-Measurement-Error">Regression Model with Measurement Error</a>
+<ul>
+<li><a href="#Effect-of-Incorporating-Measurement-Noise-on-Residuals">Effect of Incorporating Measurement Noise on Residuals</a></li>
+</ul></li>
+<li><a href="#References">References</a></li>
+</ol>
+<div class="cell" data-execution_count="37">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> set_matplotlib_formats</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> logsumexp</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pyro</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pyro.distributions <span class="im">as</span> dist</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pyro.poutine <span class="im">as</span> poutine</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pyro.optim <span class="im">as</span> optim</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyro.infer <span class="im">import</span> HMC, NUTS, MCMC</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pyro.ops.stats <span class="im">as</span> stats</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>plt.style.use(<span class="st">"bmh"</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> pyro.__version__.startswith(<span class="st">'1.8.0'</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>smoke_test <span class="op">=</span> (<span class="st">'CI'</span> <span class="kw">in</span> os.environ)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>pyro.set_rng_seed(<span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="dataset" class="level2">
+<h2 class="anchored" data-anchor-id="dataset"><a id="Dataset">Dataset</a></h2>
+<p>For this example, we will use the WaffleDivorce dataset from Chapter 05, Statistical Rethinking [<a href="#References">1</a>]. The dataset contains divorce rates in each of the 50 states in the USA, along with predictors such as population, median age of marriage, whether it is a Southern state and, curiously, number of Waffle Houses.</p>
+<div class="cell" data-execution_count="38">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>DATASET_URL <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/rmcelreath/rethinking/master/data/WaffleDivorce.csv"</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dset <span class="op">=</span> pd.read_csv(DATASET_URL, sep<span class="op">=</span><span class="st">";"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>dset.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="38">
+
+<div>
+
+<table class="dataframe table table-sm table-striped">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Location</th>
+      <th>Loc</th>
+      <th>Population</th>
+      <th>MedianAgeMarriage</th>
+      <th>Marriage</th>
+      <th>Marriage SE</th>
+      <th>Divorce</th>
+      <th>Divorce SE</th>
+      <th>WaffleHouses</th>
+      <th>South</th>
+      <th>Slaves1860</th>
+      <th>Population1860</th>
+      <th>PropSlaves1860</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Alabama</td>
+      <td>AL</td>
+      <td>4.78</td>
+      <td>25.3</td>
+      <td>20.2</td>
+      <td>1.27</td>
+      <td>12.7</td>
+      <td>0.79</td>
+      <td>128</td>
+      <td>1</td>
+      <td>435080</td>
+      <td>964201</td>
+      <td>0.45</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Alaska</td>
+      <td>AK</td>
+      <td>0.71</td>
+      <td>25.2</td>
+      <td>26.0</td>
+      <td>2.93</td>
+      <td>12.5</td>
+      <td>2.05</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Arizona</td>
+      <td>AZ</td>
+      <td>6.33</td>
+      <td>25.8</td>
+      <td>20.3</td>
+      <td>0.98</td>
+      <td>10.8</td>
+      <td>0.74</td>
+      <td>18</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Arkansas</td>
+      <td>AR</td>
+      <td>2.92</td>
+      <td>24.3</td>
+      <td>26.4</td>
+      <td>1.70</td>
+      <td>13.5</td>
+      <td>1.22</td>
+      <td>41</td>
+      <td>1</td>
+      <td>111115</td>
+      <td>435450</td>
+      <td>0.26</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>California</td>
+      <td>CA</td>
+      <td>37.25</td>
+      <td>26.8</td>
+      <td>19.1</td>
+      <td>0.39</td>
+      <td>8.0</td>
+      <td>0.24</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>379994</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+</div>
+<p>Let us plot the pair-wise relationship amongst the main variables in the dataset, using <code>seaborn.pairplot</code>.</p>
+<div class="cell" data-execution_count="39">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">vars</span> <span class="op">=</span> [</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Population"</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MedianAgeMarriage"</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Marriage"</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"WaffleHouses"</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"South"</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Divorce"</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>sns.pairplot(dset, x_vars<span class="op">=</span><span class="bu">vars</span>, y_vars<span class="op">=</span><span class="bu">vars</span>, palette<span class="op">=</span><span class="st">"husl"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-4-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>From the plots above, we can clearly observe that there is a relationship between divorce rates and marriage rates in a state (as might be expected), and also between divorce rates and median age of marriage.</p>
+<p>There is also a weak relationship between number of Waffle Houses and divorce rates, which is not obvious from the plot above, but will be clearer if we regress <code>Divorce</code> against <code>WaffleHouse</code> and plot the results.</p>
+<div class="cell" data-execution_count="40">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sns.regplot(x<span class="op">=</span><span class="st">"WaffleHouses"</span>, y<span class="op">=</span><span class="st">"Divorce"</span>, data<span class="op">=</span>dset)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-5-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>This is an example of a spurious association. We do not expect the number of Waffle Houses in a state to affect the divorce rate, but it is likely correlated with other factors that have an effect on the divorce rate. We will not delve into this spurious association in this tutorial, but the interested reader is encouraged to read Chapters 5 and 6 of [<a href="#References">1</a>] which explores the problem of causal association in the presence of multiple predictors.</p>
+<p>For simplicity, we will primarily focus on marriage rate and the median age of marriage as our predictors for divorce rate throughout the remaining tutorial.</p>
+</section>
+<section id="regression-model-to-predict-divorce-rate" class="level2">
+<h2 class="anchored" data-anchor-id="regression-model-to-predict-divorce-rate"><a id="#Regression-Model-to-Predict-Divorce-Rate">Regression Model to Predict Divorce Rate</a></h2>
+<p>Let us now write a regression model in <em>Pyro</em> to predict the divorce rate as a linear function of marriage rate and median age of marriage in each of the states.</p>
+<p>First, note that our predictor variables have somewhat different scales. It is a good practice to standardize our predictors and response variables to mean <code>0</code> and standard deviation <code>1</code>, which should result in <a href="https://mc-stan.org/docs/2_19/stan-users-guide/standardizing-predictors-and-outputs.html">faster inference</a>.</p>
+<div class="cell" data-execution_count="41">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>standardize <span class="op">=</span> <span class="kw">lambda</span> x: (x <span class="op">-</span> x.mean()) <span class="op">/</span> x.std()</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>dset[<span class="st">"AgeScaled"</span>] <span class="op">=</span> dset.MedianAgeMarriage.pipe(standardize)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>dset[<span class="st">"MarriageScaled"</span>] <span class="op">=</span> dset.Marriage.pipe(standardize)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>dset[<span class="st">"DivorceScaled"</span>] <span class="op">=</span> dset.Divorce.pipe(standardize)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We write the Pyro model as follows. While the code should largely be self-explanatory, take note of the following:</p>
+<ul>
+<li>In Pyro, model code is any Python callable which can optionally accept additional arguments and keywords. For HMC which we will be using for this tutorial, these arguments and keywords remain static during inference, but we can reuse the same model to generate <a href="#Posterior-Predictive-Distribution">predictions</a> on new data.</li>
+<li>In addition to regular Python statements, the model code also contains primitives like <code>sample</code>. These primitives can be interpreted with various side-effects using effect handlers. For more on effect handlers, refer to [<a href="#References">3</a>], [<a href="#References">4</a>]. For now, just remember that a <code>sample</code> statement makes this a stochastic function that samples some latent parameters from a <em>prior distribution</em>. Our goal is to infer the <em>posterior distribution</em> of these parameters conditioned on observed data.</li>
+<li>The reason why we have kept our predictors as optional keyword arguments is to be able to reuse the same model as we vary the set of predictors. Likewise, the reason why the response variable is optional is that we would like to reuse this model to sample from the posterior predictive distribution. See the <a href="#Posterior-Predictive-Distribution">section</a> on plotting the posterior predictive distribution, as an example.</li>
+</ul>
+<div class="cell" data-execution_count="42">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model(marriage<span class="op">=</span><span class="va">None</span>, age<span class="op">=</span><span class="va">None</span>, divorce<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> pyro.sample(<span class="st">"a"</span>, dist.Normal(<span class="fl">0.0</span>, <span class="fl">0.2</span>))</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    M, A <span class="op">=</span> <span class="fl">0.0</span>, <span class="fl">0.0</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    nums <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> age <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        nums <span class="op">=</span> age.shape[<span class="dv">0</span>]</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        bA <span class="op">=</span> pyro.sample(<span class="st">"bA"</span>, dist.Normal(<span class="fl">0.0</span>, <span class="fl">0.5</span>))</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        A <span class="op">=</span> bA <span class="op">*</span> age</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> marriage <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        nums <span class="op">=</span> marriage.shape[<span class="dv">0</span>]</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        bM <span class="op">=</span> pyro.sample(<span class="st">"bM"</span>, dist.Normal(<span class="fl">0.0</span>, <span class="fl">0.5</span>))</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        M <span class="op">=</span> bM <span class="op">*</span> marriage</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> pyro.sample(<span class="st">"sigma"</span>, dist.Exponential(<span class="fl">1.0</span>))</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a <span class="op">+</span> M <span class="op">+</span> A</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># pyro.sample("obs", dist.Normal(mu, sigma), obs=divorce)</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> pyro.plate(<span class="st">"data"</span>):</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        pyro.sample(<span class="st">"obs"</span>, dist.Normal(mu, sigma), obs<span class="op">=</span>divorce)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="model-1-predictor---marriage-rate" class="level3">
+<h3 class="anchored" data-anchor-id="model-1-predictor---marriage-rate"><a id="Model-1:-Predictor---Marriage-Rate">Model 1: Predictor - Marriage Rate</a></h3>
+<p>We first try to model the divorce rate as depending on a single variable, marriage rate. As mentioned above, we can use the same <code>model</code> code as earlier, but only pass values for <code>marriage</code> and <code>divorce</code> keyword arguments. We will use the No U-Turn Sampler (see [<a href="#References">5</a>] for more details on the NUTS algorithm) to run inference on this simple model.</p>
+<p>The Hamiltonian Monte Carlo (or, the NUTS) implementation in Pyro takes in a potential energy function. This is the negative log joint density for the model. Therefore, for our model description above, we need to construct a function which given the parameter values returns the potential energy (or negative log joint density). Additionally, the verlet integrator in HMC (or, NUTS) returns sample values simulated using Hamiltonian dynamics in the unconstrained space. As such, continuous variables with bounded support need to be transformed into unconstrained space using bijective transforms. We also need to transform these samples back to their constrained support before returning these values to the user. Thankfully, this is handled on the backend for us, within a convenience class for doing <a href="https://docs.pyro.ai/en/stable/mcmc.html">MCMC inference</a> that has the following methods:</p>
+<ul>
+<li><code>run(...)</code>: runs warmup, adapts steps size and mass matrix, and does sampling using the sample from the warmup phase.</li>
+<li><code>summary()</code>: print diagnostic information like quantiles, effective sample size, and the Gelman-Rubin diagnostic.</li>
+<li><code>get_samples()</code>: gets samples from the posterior distribution.</li>
+</ul>
+<p>Note:</p>
+<ul>
+<li>We run inference with the <code>NUTS</code> sampler. To run vanilla HMC, we can instead use the <a href="https://docs.pyro.ai/en/stable/mcmc.html#hmc">HMC</a> class.</li>
+</ul>
+<div class="cell" data-execution_count="43">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run NUTS</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>kernel <span class="op">=</span> NUTS(model)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>num_samples <span class="op">=</span> <span class="dv">2000</span> <span class="cf">if</span> <span class="kw">not</span> smoke_test <span class="cf">else</span> <span class="dv">2</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>warmup_steps<span class="op">=</span><span class="dv">200</span> <span class="cf">if</span> <span class="kw">not</span> smoke_test <span class="cf">else</span> <span class="dv">2</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>mcmc <span class="op">=</span> MCMC(kernel, num_samples<span class="op">=</span>num_samples, warmup_steps<span class="op">=</span>warmup_steps)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="44">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>mcmc.run(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    marriage<span class="op">=</span>torch.tensor(dset.MarriageScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>), </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    divorce<span class="op">=</span>torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>mcmc.summary()</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>samples_1 <span class="op">=</span> mcmc.get_samples()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Sample: 100%|██████████| 2200/2200 [00:11, 199.71it/s, step size=8.56e-01, acc. prob=0.906]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+                mean       std    median      5.0%     95.0%     n_eff     r_hat
+         a      0.00      0.11      0.00     -0.17      0.19   2707.47      1.00
+        bM      0.35      0.12      0.35      0.14      0.55   1621.67      1.00
+     sigma      0.95      0.10      0.94      0.79      1.11   1390.63      1.00
+
+Number of divergences: 0</code></pre>
+</div>
+</div>
+<section id="posterior-distribution-over-the-regression-parameters" class="level4">
+<h4 class="anchored" data-anchor-id="posterior-distribution-over-the-regression-parameters"><a id="Posterior-Distribution-over-the-Regression-Parameters">Posterior Distribution over the Regression Parameters</a></h4>
+<p>We notice that the progress bar gives us online statistics on the acceptance probability, step size and number of steps taken per sample while running NUTS. In particular, during warmup, we adapt the step size and mass matrix to achieve a certain target acceptance probability which is 0.8, by default. We were able to successfully adapt our step size to achieve this target in the warmup phase.</p>
+<p>During warmup, the aim is to adapt hyper-parameters such as step size and mass matrix (the HMC algorithm is very sensitive to these hyper-parameters), and to reach the typical set (see [<a href="#References">6</a>] for more details). If there are any issues in the model specification, the first signal to notice would be low acceptance probabilities or very high number of steps. We use the sample from the end of the warmup phase to seed the MCMC chain (denoted by the second sample progress bar) from which we generate the desired number of samples from our target distribution.</p>
+<p>At the end of inference, Pyro prints the mean, std and 90% CI values for each of the latent parameters. Note that since we standardized our predictors and response variable, we would expect the intercept to have mean 0, as can be seen here. It also prints other convergence diagnostics on the latent parameters in the model, <a href="https://docs.pyro.ai/en/1.8.0/ops.html?highlight=effective_sample_size#pyro.ops.stats.effective_sample_size">effective sample size</a> and the <a href="https://docs.pyro.ai/en/1.8.0/ops.html?highlight=gelman%20rubin#pyro.ops.stats.gelman_rubin">gelman rubin diagnostic</a> (<span class="math inline">\(\hat{R}\)</span>). The value for these diagnostics indicates that the chain has converged to the target distribution. In our case, the “target distribution” is the posterior distribution over the latent parameters that we are interested in. Note that this is often worth verifying with multiple chains for more complicated models. In the end, <code>samples_1</code> is a collection (in our case, a <code>dict</code> since <code>init_samples</code> was a <code>dict</code>) containing samples from the posterior distribution for each of the latent parameters in the model.</p>
+<p>To look at our regression fit, let us plot the regression line using our posterior estimates for the regression parameters, along with the 90% Credibility Interval (CI). Note that the <a href="https://docs.pyro.ai/en/stable/ops.html?highlight=hpdi#pyro.ops.stats.hpdi">hpdi</a> function in Pyro’s <code>Statistical Utilities</code> module can be used to compute CI. In the functions below, note that the collected samples from the posterior are all along the leading axis.</p>
+<div class="cell" data-execution_count="45">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_regression(x, y_mean, y_hpdi):</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Sort values for plotting by x axis</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> np.argsort(x)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    marriage <span class="op">=</span> x[idx]</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    mean <span class="op">=</span> y_mean[idx]</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    hpdi <span class="op">=</span> y_hpdi[:, idx]</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    divorce <span class="op">=</span> dset.DivorceScaled.values[idx]</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Plot</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    fig, ax <span class="op">=</span> plt.subplots(nrows<span class="op">=</span><span class="dv">1</span>, ncols<span class="op">=</span><span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">6</span>))</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    ax.plot(marriage, mean)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    ax.plot(marriage, divorce, <span class="st">"o"</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    ax.fill_between(marriage, hpdi[<span class="dv">0</span>], hpdi[<span class="dv">1</span>], alpha<span class="op">=</span><span class="fl">0.3</span>, interpolate<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ax</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute empirical posterior distribution over mu</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>posterior_mu <span class="op">=</span> (</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    torch.unsqueeze(samples_1[<span class="st">"a"</span>], <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> torch.unsqueeze(samples_1[<span class="st">"bM"</span>], <span class="op">-</span><span class="dv">1</span>) <span class="op">*</span> dset.MarriageScaled.values</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>mean_mu <span class="op">=</span> torch.mean(posterior_mu, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>hpdi_mu <span class="op">=</span> stats.hpdi(posterior_mu, <span class="fl">0.9</span>)</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_regression(dset.MarriageScaled.values, mean_mu, hpdi_mu)</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    xlabel<span class="op">=</span><span class="st">"Marriage rate"</span>, ylabel<span class="op">=</span><span class="st">"Divorce rate"</span>, title<span class="op">=</span><span class="st">"Regression line with 90% CI"</span> </span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-10-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>We can see from the plot, that the CI broadens towards the tails where the data is relatively sparse, as can be expected.</p>
+</section>
+<section id="prior-predictive-distribution" class="level4">
+<h4 class="anchored" data-anchor-id="prior-predictive-distribution"><a id="Prior-Predictive-Distribution">Prior Predictive Distribution</a></h4>
+<p>Let us check that we have set sensible priors by sampling from the prior predictive distribution. Pyro provides a handy <a href="https://docs.pyro.ai/en/stable/inference_algos.html?highlight=Predictive#module-pyro.infer.predictive">Predictive</a> utility for this purpose.</p>
+<div class="cell" data-execution_count="46">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyro.infer <span class="im">import</span> Predictive</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>prior_predictive <span class="op">=</span> Predictive(model, num_samples<span class="op">=</span><span class="dv">100</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>prior_predictions <span class="op">=</span> prior_predictive(marriage<span class="op">=</span>torch.tensor(dset.MarriageScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>))[</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"obs"</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>mean_prior_pred <span class="op">=</span> torch.mean(prior_predictions, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>hpdi_prior_pred <span class="op">=</span> stats.hpdi(prior_predictions, <span class="fl">0.9</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_regression(dset.MarriageScaled.values, mean_prior_pred, hpdi_prior_pred)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"Marriage rate"</span>, ylabel<span class="op">=</span><span class="st">"Divorce rate"</span>, title<span class="op">=</span><span class="st">"Predictions with 90% CI"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-11-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="posterior-predictive-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="posterior-predictive-distribution"><a id="Posterior-Predictive-Distribution">Posterior Predictive Distribution</a></h3>
+<p>Let us now look at the posterior predictive distribution to see how our predictive distribution looks with respect to the observed divorce rates. To get samples from the posterior predictive distribution, we need to run the model by substituting the latent parameters with samples from the posterior. Note that by default we generate a single prediction for each sample from the joint posterior distribution, but this can be controlled using the <code>num_samples</code> argument.</p>
+<div class="cell" data-execution_count="47">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>predictive <span class="op">=</span> Predictive(model<span class="op">=</span>model, posterior_samples<span class="op">=</span>samples_1)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> predictive(marriage<span class="op">=</span>torch.tensor(dset.MarriageScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>))[<span class="st">"obs"</span>]</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> dset.<span class="bu">filter</span>([<span class="st">"Location"</span>])</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Mean Predictions"</span>] <span class="op">=</span> torch.mean(predictions, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>df.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="47">
+
+<div>
+
+<table class="dataframe table table-sm table-striped">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Location</th>
+      <th>Mean Predictions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Alabama</td>
+      <td>0.024132</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Alaska</td>
+      <td>0.511163</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Arizona</td>
+      <td>0.040832</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Arkansas</td>
+      <td>0.559602</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>California</td>
+      <td>-0.124215</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+</div>
+<section id="predictive-utility-with-effect-handlers" class="level4">
+<h4 class="anchored" data-anchor-id="predictive-utility-with-effect-handlers"><a id="Predictive-Utility-With-Effect-Handlers">Predictive Utility With Effect Handlers</a></h4>
+<p>To remove the magic behind <code>Predictive</code>, let us see how we can use Poutine <a href="https://docs.pyro.ai/en/stable/poutine.html?highlight=effect%20handler">(Effect Handlers)</a>. Unlike NumPyro, where we could combine the effect handlers with the <a href="https://github.com/google/jax#auto-vectorization-with-vmap">vmap</a> JAX primitive to implement our own simplified predictive utility function that can do vectorized predictions, here we use a native for-loop to show the same implementation.</p>
+<div class="cell" data-execution_count="48">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> predict(post_samples, model, <span class="op">*</span>args, <span class="op">**</span>kwargs):</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    conditioned_model <span class="op">=</span> poutine.condition(model, post_samples)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    model_trace <span class="op">=</span> poutine.trace(conditioned_model).get_trace(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model_trace.nodes[<span class="st">"obs"</span>][<span class="st">"value"</span>]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> predict_fn(post_samples):</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> pyro.plate(<span class="st">"samples"</span>, num_samples):</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> predict(post_samples, model, marriage<span class="op">=</span>torch.reshape(torch.tensor(dset.MarriageScaled.values, </span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>                                            dtype<span class="op">=</span>torch.<span class="bu">float</span>), (<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Note the use of the <code>condition</code> and <code>trace</code> effect handlers in the <code>predict</code> function.</p>
+<ul>
+<li>The <code>condition</code> effect handler conditions the latent sample sites to certain values. In our case, we are conditioning on values from the posterior distribution returned by MCMC.</li>
+<li>The <code>trace</code> effect handler runs the model and records the execution trace within an <code>OrderedDict</code>. This trace object contains execution metadata that is useful for computing quantities such as the log joint density.</li>
+</ul>
+<p>It should be clear now that the <code>predict</code> function simply runs the model by substituting the latent parameters with samples from the posterior (generated by the <code>mcmc</code> function) to generate predictions. Each draw from the posterior can be used to get predictions over all the 50 states. We get a <code>predictions_1</code> array of shape <code>(num_samples, 50)</code>. We can then compute the mean and 90% CI of these samples to plot the posterior predictive distribution. We note that our mean predictions are similar to those obtained from the Predictive utility class.</p>
+<div class="cell" data-execution_count="49">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>predictions_1 <span class="op">=</span> predict_fn(samples_1)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>mean_pred <span class="op">=</span> torch.mean(predictions_1, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> dset.<span class="bu">filter</span>([<span class="st">"Location"</span>])</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Mean Predictions"</span>] <span class="op">=</span> mean_pred</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>df.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="49">
+
+<div>
+
+<table class="dataframe table table-sm table-striped">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Location</th>
+      <th>Mean Predictions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Alabama</td>
+      <td>-0.003167</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Alaska</td>
+      <td>0.497712</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Arizona</td>
+      <td>-0.000853</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Arkansas</td>
+      <td>0.572533</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>California</td>
+      <td>-0.075509</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="cell" data-execution_count="50">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>hpdi_pred <span class="op">=</span> stats.hpdi(predictions_1, <span class="fl">0.9</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_regression(dset.MarriageScaled.values, mean_pred, hpdi_pred)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"Marriage rate"</span>, </span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>        ylabel<span class="op">=</span><span class="st">"Divorce rate"</span>, </span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span><span class="st">"Predictions with 90% CI"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-15-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>We have used the same <code>plot_regression</code> function as earlier. We notice that our CI for the predictive distribution is much broader as compared to the last plot due to the additional noise introduced by the <code>sigma</code> parameter. Most data points lie well within the 90% CI, which indicates a good fit.</p>
+</section>
+<section id="model-predictive-density" class="level4">
+<h4 class="anchored" data-anchor-id="model-predictive-density"><a id="Model-Predictive-Density">Model Predictive Density</a></h4>
+<p>Likewise, making use of effect-handlers, we can also compute the log likelihood for this model given the dataset, and the log posterior predictive density [<a href="#References">6</a>] which is given by <span class="math display">\[ log \prod_{i=1}^{n} \int p(y_i | \theta) p_{post}(\theta) d\theta
+\approx \sum_{i=1}^n log \frac{\sum_s p(\theta^{s})}{S} \\
+= \sum_{i=1}^n (log \sum_s p(\theta^{s}) - log(S))
+\]</span>.</p>
+<p>Here, <span class="math inline">\(i\)</span> indexes the observed data points <span class="math inline">\(y\)</span> and <span class="math inline">\(s\)</span> indexes the posterior samples over the latent parameters <span class="math inline">\(\theta\)</span>. If the posterior predictive density for a model has a comparatively high value, it indicates that the observed data-points have higher probability under the given model.</p>
+<div class="cell" data-execution_count="51">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> log_likelihood(params, model, <span class="op">*</span>args, <span class="op">**</span>kwargs):</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> poutine.condition(model, params)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    model_trace <span class="op">=</span> poutine.trace(model).get_trace(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    obs_node <span class="op">=</span> model_trace.nodes[<span class="st">"obs"</span>]</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> obs_node[<span class="st">"fn"</span>].log_prob(obs_node[<span class="st">"value"</span>])</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> log_pred_density_helper(params, model, n, var_not_used<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>args, <span class="op">**</span>kwargs):</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    single_param <span class="op">=</span> {}</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    tmp_tensor <span class="op">=</span> torch.empty(size<span class="op">=</span>(num_samples, <span class="dv">50</span>))</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> var_not_used <span class="op">==</span> <span class="st">'age'</span>:</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>            single_param <span class="op">=</span> {<span class="st">"a"</span>: params[<span class="st">"a"</span>][i], <span class="st">"bM"</span>: params[<span class="st">"bM"</span>][i], <span class="st">"sigma"</span>: params[<span class="st">"sigma"</span>][i]}</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> var_not_used <span class="op">==</span> <span class="st">'marriage'</span>:</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>            single_param <span class="op">=</span> {<span class="st">"a"</span>: params[<span class="st">"a"</span>][i], <span class="st">"bA"</span>: params[<span class="st">"bA"</span>][i], <span class="st">"sigma"</span>: params[<span class="st">"sigma"</span>][i]}</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>            single_param <span class="op">=</span> {<span class="st">"a"</span>: params[<span class="st">"a"</span>][i], <span class="st">"bM"</span>: params[<span class="st">"bM"</span>][i], <span class="st">"bA"</span>: params[<span class="st">"bA"</span>][i], <span class="st">"sigma"</span>: params[<span class="st">"sigma"</span>][i]}</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>        tmp_tensor[i] <span class="op">=</span> log_likelihood(single_param, model, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> tmp_tensor</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> log_pred_density(params, model, var_not_used<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>args, <span class="op">**</span>kwargs):</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">list</span>(params.values())[<span class="dv">0</span>].shape[<span class="dv">0</span>]</span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>    log_lk_vals <span class="op">=</span> log_pred_density_helper(params, model, n, var_not_used, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (torch.logsumexp(log_lk_vals, <span class="dv">0</span>) <span class="op">-</span> np.log(n)).<span class="bu">sum</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="52">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Log posterior predictive density: </span><span class="sc">{}</span><span class="st">"</span>.<span class="bu">format</span>(</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>        log_pred_density(samples_1, </span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>                        model, </span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>                        var_not_used<span class="op">=</span><span class="st">'age'</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>                        marriage<span class="op">=</span>torch.tensor(dset.MarriageScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>),</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>                        divorce<span class="op">=</span>torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>                    )</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Log posterior predictive density: -66.72371673583984</code></pre>
+</div>
+</div>
+<p>In this tutorial, we would like to emphasize that there is nothing magical about utility functions available in Pyro, and you can roll out your own inference utilities using Pyro’s effect handling stack.</p>
+</section>
+<section id="regression-with-pyros-stochastic-variational-inference-svi" class="level4">
+<h4 class="anchored" data-anchor-id="regression-with-pyros-stochastic-variational-inference-svi"><a id="SVI">Regression with Pyro’s Stochastic Variational Inference (SVI)</a></h4>
+<p>The objective of variational inference is to pick a family of distributions with its own parameters to approximate the true posterior distribution. Then we find the parameter values which make the approximate distribution close the the true posterior. We carry out the steps below to define the model, extract the samples and plot the regression line. The only notable difference is that we define a <code>guide</code> to approximate the posterior. For this we use one of Pyro’s <a href="https://docs.pyro.ai/en/stable/infer.autoguide.html">autoguides</a> - <code>AutoDiagonalNormal</code>.</p>
+<div class="cell" data-execution_count="53">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>pyro.set_rng_seed(<span class="dv">1</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyro.infer <span class="im">import</span> SVI, Trace_ELBO</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyro.infer.autoguide <span class="im">import</span> AutoDiagonalNormal</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>learing_rate <span class="op">=</span> <span class="fl">1e-4</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>guide <span class="op">=</span> AutoDiagonalNormal(model)</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>num_iter <span class="op">=</span> <span class="dv">7000</span> <span class="cf">if</span> <span class="kw">not</span> smoke_test <span class="cf">else</span> <span class="dv">2</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>svi <span class="op">=</span> SVI(</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    model,</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    guide,</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    optim.Adam({<span class="st">"lr"</span>: learing_rate}),</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    loss<span class="op">=</span>Trace_ELBO()</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> np.empty(num_iter)</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>pyro.clear_param_store()</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step <span class="kw">in</span> <span class="bu">range</span>(num_iter):</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>    loss[step] <span class="op">=</span> svi.step(</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>        marriage<span class="op">=</span>torch.tensor(dset.MarriageScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>),</span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>        divorce<span class="op">=</span>torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>)</span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> step <span class="op">%</span> <span class="dv">1000</span> <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f'step: </span><span class="sc">{</span>step<span class="sc">:&gt;5}</span><span class="ss">, ELBO loss: </span><span class="sc">{</span>loss[step]<span class="sc">:.2f}</span><span class="ss">'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>step:     0, ELBO loss: 102.63
+step:  1000, ELBO loss: 87.01
+step:  2000, ELBO loss: 76.31
+step:  3000, ELBO loss: 75.36
+step:  4000, ELBO loss: 77.44
+step:  5000, ELBO loss: 73.24
+step:  6000, ELBO loss: 73.90</code></pre>
+</div>
+</div>
+<div class="cell" data-execution_count="54">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the loss curve</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>plt.plot(loss)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">'step'</span>)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">'ELBO Loss'</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-19-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>We sample from the posterior distribution of the regression parameters of the model using the <code>Predictive</code> utility.</p>
+<div class="cell" data-execution_count="55">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>posterior_svi <span class="op">=</span> Predictive(model, guide<span class="op">=</span>guide, num_samples<span class="op">=</span>num_samples)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>samples_1_svi <span class="op">=</span> {k: v.reshape(num_samples)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>                   <span class="cf">for</span> k, v <span class="kw">in</span> posterior_svi(</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>                       marriage<span class="op">=</span>torch.tensor(dset.MarriageScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>),</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>                       divorce<span class="op">=</span>torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>                   ).items()</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>                   <span class="cf">if</span> k <span class="op">!=</span> <span class="st">"obs"</span>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let us look at the regression fit of the <code>SVI</code> model. We plot the regression line using our posterior estimates for the regression parameters, along with the 90% Credibility Interval (CI). We can see that the regression fit is very similar to what we got for the <code>NUTS</code> model earlier.</p>
+<div class="cell" data-execution_count="56">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute empirical posterior distribution over mu</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>posterior_mu_svi <span class="op">=</span> (</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    torch.unsqueeze(samples_1_svi[<span class="st">"a"</span>], <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> torch.unsqueeze(samples_1_svi[<span class="st">"bM"</span>], <span class="op">-</span><span class="dv">1</span>) <span class="op">*</span> dset.MarriageScaled.values</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>mean_mu_svi <span class="op">=</span> torch.mean(posterior_mu_svi, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>hpdi_mu_svi <span class="op">=</span> stats.hpdi(posterior_mu_svi, <span class="fl">0.9</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_regression(dset.MarriageScaled.values, mean_mu_svi, hpdi_mu_svi)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    xlabel<span class="op">=</span><span class="st">"Marriage rate"</span>, ylabel<span class="op">=</span><span class="st">"Divorce rate"</span>, title<span class="op">=</span><span class="st">"Regression line with 90% CI"</span> </span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-21-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="model-2-predictor---median-age-of-marriage" class="level3">
+<h3 class="anchored" data-anchor-id="model-2-predictor---median-age-of-marriage"><a id="Model-2:-Predictor---Median-Age-of-Marriage">Model 2: Predictor - Median Age of Marriage</a></h3>
+<p>We will now model the divorce rate as a function of the median age of marriage. The computations are mostly a reproduction of what we did for Model 1. Notice the following:</p>
+<ul>
+<li>Divorce rate is inversely related to the age of marriage. Hence states where the median age of marriage is low will likely have a higher divorce rate.</li>
+<li>We get a higher log likelihood as compared to Model 2, indicating that median age of marriage is likely a much better predictor of divorce rate.</li>
+</ul>
+<div class="cell" data-execution_count="57">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run NUTS</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>kernel <span class="op">=</span> NUTS(model)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>num_samples <span class="op">=</span> <span class="dv">2000</span> <span class="cf">if</span> <span class="kw">not</span> smoke_test <span class="cf">else</span> <span class="dv">2</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>warmup_steps<span class="op">=</span><span class="dv">200</span> <span class="cf">if</span> <span class="kw">not</span> smoke_test <span class="cf">else</span> <span class="dv">2</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>mcmc <span class="op">=</span> MCMC(kernel, num_samples<span class="op">=</span>num_samples, warmup_steps<span class="op">=</span>warmup_steps)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="58">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>mcmc.run(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    age<span class="op">=</span>torch.tensor(dset.AgeScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>), </span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    divorce<span class="op">=</span>torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>mcmc.summary()</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>samples_2 <span class="op">=</span> mcmc.get_samples()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Sample: 100%|██████████| 2200/2200 [00:11, 190.65it/s, step size=7.52e-01, acc. prob=0.921]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+                mean       std    median      5.0%     95.0%     n_eff     r_hat
+         a     -0.00      0.10      0.00     -0.16      0.16   1865.24      1.00
+        bA     -0.57      0.11     -0.57     -0.76     -0.40   1618.48      1.00
+     sigma      0.82      0.09      0.82      0.67      0.95   1355.84      1.00
+
+Number of divergences: 0</code></pre>
+</div>
+</div>
+<div class="cell" data-execution_count="59">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>posterior_mu <span class="op">=</span> (</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    torch.unsqueeze(samples_2[<span class="st">"a"</span>], <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> torch.unsqueeze(samples_2[<span class="st">"bA"</span>], <span class="op">-</span><span class="dv">1</span>) <span class="op">*</span> dset.AgeScaled.values</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>mean_mu <span class="op">=</span> torch.mean(posterior_mu, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>hpdi_mu <span class="op">=</span> stats.hpdi(posterior_mu, <span class="fl">0.9</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_regression(dset.AgeScaled.values, mean_mu, hpdi_mu)</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    xlabel<span class="op">=</span><span class="st">"Median marriage age"</span>, </span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    ylabel<span class="op">=</span><span class="st">"Divorce rate"</span>, </span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Regression line with 90% CI"</span> </span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-24-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<div class="cell" data-execution_count="60">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>predictive_2 <span class="op">=</span> Predictive(model, samples_2)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>predictions_2 <span class="op">=</span> predictive_2(age<span class="op">=</span>torch.tensor(dset.AgeScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>))[<span class="st">"obs"</span>]</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>mean_pred <span class="op">=</span> torch.mean(predictions_2, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>hpdi_pred <span class="op">=</span> stats.hpdi(predictions_2, <span class="fl">0.9</span>)</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plot_regression(dset.AgeScaled.values, mean_pred, hpdi_pred)</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"Median Age"</span>, ylabel<span class="op">=</span><span class="st">"Divorce rate"</span>, title<span class="op">=</span><span class="st">"Predictions with 90% CI"</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-25-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<div class="cell" data-execution_count="61">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Log posterior predictive density: </span><span class="sc">{}</span><span class="st">"</span>.<span class="bu">format</span>(</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>        log_pred_density(samples_2, </span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>                        model, </span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>                        var_not_used<span class="op">=</span><span class="st">'marriage'</span>,</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>                        age<span class="op">=</span>torch.tensor(dset.AgeScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>),</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>                        divorce<span class="op">=</span>torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>)</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>                    )</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Log posterior predictive density: -59.240997314453125</code></pre>
+</div>
+</div>
+</section>
+<section id="model-3-predictor---marriage-rate-and-median-age-of-marriage" class="level3">
+<h3 class="anchored" data-anchor-id="model-3-predictor---marriage-rate-and-median-age-of-marriage"><a id="Model-3:-Predictor---Marriage-Rate-and-Median-Age-of-Marriage">Model 3: Predictor - Marriage Rate and Median Age of Marriage</a></h3>
+<p>Finally, we will also model divorce rate as depending on both marriage rate as well as the median age of marriage. Note that the model’s posterior predictive density is similar to Model 2 which likely indicates that the marginal information from marriage rate in predicting divorce rate is low when the median age of marriage is already known.</p>
+<div class="cell" data-execution_count="62">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run NUTS</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>kernel <span class="op">=</span> NUTS(model)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>num_samples <span class="op">=</span> <span class="dv">2000</span> <span class="cf">if</span> <span class="kw">not</span> smoke_test <span class="cf">else</span> <span class="dv">2</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>warmup_steps<span class="op">=</span><span class="dv">200</span> <span class="cf">if</span> <span class="kw">not</span> smoke_test <span class="cf">else</span> <span class="dv">2</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>mcmc <span class="op">=</span> MCMC(kernel, num_samples<span class="op">=</span>num_samples, warmup_steps<span class="op">=</span>warmup_steps)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="63">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>mcmc.run(</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    marriage<span class="op">=</span>torch.tensor(dset.MarriageScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>), </span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    age<span class="op">=</span>torch.tensor(dset.AgeScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>), </span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    divorce<span class="op">=</span>torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>)</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>mcmc.summary()</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>samples_3 <span class="op">=</span> mcmc.get_samples()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Sample: 100%|██████████| 2200/2200 [00:17, 126.95it/s, step size=6.45e-01, acc. prob=0.906]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+                mean       std    median      5.0%     95.0%     n_eff     r_hat
+         a     -0.00      0.10     -0.00     -0.16      0.17   2052.14      1.00
+        bA     -0.60      0.15     -0.61     -0.84     -0.36   1583.09      1.00
+        bM     -0.06      0.15     -0.06     -0.29      0.21   1526.50      1.00
+     sigma      0.82      0.09      0.81      0.69      0.97   1719.60      1.00
+
+Number of divergences: 0</code></pre>
+</div>
+</div>
+<div class="cell" data-execution_count="64">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Log posterior predictive density: </span><span class="sc">{}</span><span class="st">"</span>.<span class="bu">format</span>(</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>        log_pred_density(samples_3, </span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>                        model, </span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>                        <span class="co"># var_not_used='marriage',</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>                        marriage<span class="op">=</span>torch.tensor(dset.MarriageScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>),</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>                        age<span class="op">=</span>torch.tensor(dset.AgeScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>),</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>                        divorce<span class="op">=</span>torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>                    )</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Log posterior predictive density: -59.04816436767578</code></pre>
+</div>
+</div>
+</section>
+<section id="divorce-rate-residuals-by-state" class="level3">
+<h3 class="anchored" data-anchor-id="divorce-rate-residuals-by-state"><a id="Divorce-Rate-Residuals-by-State">Divorce Rate Residuals by State</a></h3>
+<p>The regression plots above shows that the observed divorce rates for many states differs considerably from the mean regression line. To dig deeper into how the last model (Model 3) under-predicts or over-predicts for each of the states, we will plot the posterior predictive and residuals (<code>Observed divorce rate - Predicted divorce rate</code>) for each of the states.</p>
+<div class="cell" data-execution_count="65">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Predictions for Model 3</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>predictive_3 <span class="op">=</span> Predictive(model, samples_3)</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>predictions_3 <span class="op">=</span> predictive_3(marriage<span class="op">=</span>dset.MarriageScaled.values, age<span class="op">=</span>dset.AgeScaled.values)[<span class="st">"obs"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="66">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> torch.arange(<span class="dv">50</span>)</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(nrows<span class="op">=</span><span class="dv">1</span>, ncols<span class="op">=</span><span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">16</span>))</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>pred_mean <span class="op">=</span> torch.mean(predictions_3, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>pred_hpdi <span class="op">=</span> stats.hpdi(predictions_3, <span class="fl">0.9</span>)</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>residuals_3 <span class="op">=</span> torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>) <span class="op">-</span> predictions_3</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>residuals_mean <span class="op">=</span> torch.mean(residuals_3, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>residuals_hpdi <span class="op">=</span> stats.hpdi(residuals_3, <span class="fl">0.9</span>)</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>idx <span class="op">=</span> torch.argsort(residuals_mean)</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot posterior predictive</span></span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].plot(torch.zeros(<span class="dv">50</span>), y, <span class="st">"--"</span>)</span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].errorbar(</span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>    pred_mean[idx],</span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>    y,</span>
+<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>    xerr<span class="op">=</span>pred_hpdi[<span class="dv">1</span>, idx] <span class="op">-</span> pred_mean[idx],</span>
+<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
+<span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>    ms<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a>    mew<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb40-20"><a href="#cb40-20" aria-hidden="true" tabindex="-1"></a>    ls<span class="op">=</span><span class="st">"none"</span>,</span>
+<span id="cb40-21"><a href="#cb40-21" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.8</span>,</span>
+<span id="cb40-22"><a href="#cb40-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb40-23"><a href="#cb40-23" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].plot(dset.DivorceScaled.values[idx], y, marker<span class="op">=</span><span class="st">"o"</span>, ls<span class="op">=</span><span class="st">"none"</span>, color<span class="op">=</span><span class="st">"gray"</span>)</span>
+<span id="cb40-24"><a href="#cb40-24" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].<span class="bu">set</span>(</span>
+<span id="cb40-25"><a href="#cb40-25" aria-hidden="true" tabindex="-1"></a>    xlabel<span class="op">=</span><span class="st">"Posterior Predictive (red) vs. Actuals (gray)"</span>,</span>
+<span id="cb40-26"><a href="#cb40-26" aria-hidden="true" tabindex="-1"></a>    ylabel<span class="op">=</span><span class="st">"State"</span>,</span>
+<span id="cb40-27"><a href="#cb40-27" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Posterior Predictive with 90% CI"</span>,</span>
+<span id="cb40-28"><a href="#cb40-28" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb40-29"><a href="#cb40-29" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_yticks(y)</span>
+<span id="cb40-30"><a href="#cb40-30" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">0</span>].set_yticklabels(dset.Loc.values[idx], fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb40-31"><a href="#cb40-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-32"><a href="#cb40-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot residuals</span></span>
+<span id="cb40-33"><a href="#cb40-33" aria-hidden="true" tabindex="-1"></a>residuals_3 <span class="op">=</span> torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>) <span class="op">-</span> predictions_3</span>
+<span id="cb40-34"><a href="#cb40-34" aria-hidden="true" tabindex="-1"></a>residuals_mean <span class="op">=</span> torch.mean(residuals_3, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb40-35"><a href="#cb40-35" aria-hidden="true" tabindex="-1"></a>residuals_hpdi <span class="op">=</span> stats.hpdi(residuals_3, <span class="fl">0.9</span>)</span>
+<span id="cb40-36"><a href="#cb40-36" aria-hidden="true" tabindex="-1"></a>err <span class="op">=</span> residuals_hpdi[<span class="dv">1</span>] <span class="op">-</span> residuals_mean</span>
+<span id="cb40-37"><a href="#cb40-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-38"><a href="#cb40-38" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].plot(torch.zeros(<span class="dv">50</span>), y, <span class="st">"--"</span>)</span>
+<span id="cb40-39"><a href="#cb40-39" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].errorbar(</span>
+<span id="cb40-40"><a href="#cb40-40" aria-hidden="true" tabindex="-1"></a>    residuals_mean[idx], y, xerr<span class="op">=</span>err[idx], marker<span class="op">=</span><span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">5</span>, mew<span class="op">=</span><span class="dv">4</span>, ls<span class="op">=</span><span class="st">"none"</span>, alpha<span class="op">=</span><span class="fl">0.8</span></span>
+<span id="cb40-41"><a href="#cb40-41" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb40-42"><a href="#cb40-42" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"Residuals"</span>, ylabel<span class="op">=</span><span class="st">"State"</span>, title<span class="op">=</span><span class="st">"Residuals with 90% CI"</span>)</span>
+<span id="cb40-43"><a href="#cb40-43" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_yticks(y)</span>
+<span id="cb40-44"><a href="#cb40-44" aria-hidden="true" tabindex="-1"></a>ax[<span class="dv">1</span>].set_yticklabels(dset.Loc.values[idx], fontsize<span class="op">=</span><span class="dv">10</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-31-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>The plot on the left shows the mean predictions with 90% CI for each of the states using Model 3. The gray markers indicate the actual observed divorce rates. The right plot shows the residuals for each of the states, and both these plots are sorted by the residuals, i.e.&nbsp;at the bottom, we are looking at states where the model predictions are higher than the observed rates, whereas at the top, the reverse is true.</p>
+<p>Overall, the model fit seems good because most observed data points like within a 90% CI around the mean predictions. However, notice how the model over-predicts by a large margin for states like Idaho (bottom left), and on the other end under-predicts for states like Maine (top right). This is likely indicative of other factors that we are missing out in our model that affect divorce rate across different states. Even ignoring other socio-political variables, one such factor that we have not yet modeled is the measurement noise given by <code>Divorce SE</code> in the dataset. We will explore this in the next section.</p>
+</section>
+</section>
+<section id="regression-model-with-measurement-error" class="level2">
+<h2 class="anchored" data-anchor-id="regression-model-with-measurement-error"><a id="Regression-Model-with-Measurement-Error">Regression Model with Measurement Error</a></h2>
+<p>Note that in our previous models, each data point influences the regression line equally. Is this well justified? We will build on the previous model to incorporate measurement error given by <code>Divorce SE</code> variable in the dataset. Incorporating measurement noise will be useful in ensuring that observations that have higher confidence (i.e.&nbsp;lower measurement noise) have a greater impact on the regression line. On the other hand, this will also help us better model outliers with high measurement errors. For more details on modeling errors due to measurement noise, refer to Chapter 14 of [<a href="#References">1</a>].</p>
+<p>To do this, we will reuse Model 3, with the only change that the final observed value has a measurement error given by <code>divorce_sd</code> (notice that this has to be standardized since the <code>divorce</code> variable itself has been standardized to mean 0 and std 1).</p>
+<div class="cell" data-execution_count="67">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_se(marriage, age, divorce_sd, divorce<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> pyro.sample(<span class="st">"a"</span>, dist.Normal(<span class="fl">0.0</span>, <span class="fl">0.2</span>))</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    bM <span class="op">=</span> pyro.sample(<span class="st">"bM"</span>, dist.Normal(<span class="fl">0.0</span>, <span class="fl">0.5</span>))</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    M <span class="op">=</span> bM <span class="op">*</span> marriage</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    bA <span class="op">=</span> pyro.sample(<span class="st">"bA"</span>, dist.Normal(<span class="fl">0.0</span>, <span class="fl">0.5</span>))</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> bA <span class="op">*</span> age</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> pyro.sample(<span class="st">"sigma"</span>, dist.Exponential(<span class="fl">1.0</span>))</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> a <span class="op">+</span> M <span class="op">+</span> A</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>    divorce_rate <span class="op">=</span> pyro.sample(<span class="st">"divorce_rate"</span>, dist.Normal(mu, sigma))</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>    pyro.sample(<span class="st">"obs"</span>, dist.Normal(divorce_rate, divorce_sd), obs<span class="op">=</span>divorce)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="68">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Standardize</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>dset[<span class="st">"DivorceScaledSD"</span>] <span class="op">=</span> dset[<span class="st">"Divorce SE"</span>] <span class="op">/</span> np.std(dset.Divorce.values)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="69">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>num_samples<span class="op">=</span><span class="dv">3000</span> <span class="cf">if</span> <span class="kw">not</span> smoke_test <span class="cf">else</span> <span class="dv">2</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>warmup_steps<span class="op">=</span><span class="dv">1000</span> <span class="cf">if</span> <span class="kw">not</span> smoke_test <span class="cf">else</span> <span class="dv">2</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>kernel <span class="op">=</span> NUTS(model_se, target_accept_prob<span class="op">=</span><span class="fl">0.9</span>)</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>mcmc <span class="op">=</span> MCMC(kernel, warmup_steps<span class="op">=</span>warmup_steps, num_samples<span class="op">=</span>num_samples)</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>mcmc.run(</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>    marriage<span class="op">=</span>torch.tensor(dset.MarriageScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>), </span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>    age<span class="op">=</span>torch.tensor(dset.AgeScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>), </span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>    divorce_sd<span class="op">=</span>torch.tensor(dset.DivorceScaledSD, dtype<span class="op">=</span>torch.<span class="bu">float</span>),</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>    divorce<span class="op">=</span>torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>)</span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>mcmc.summary()</span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>samples_4 <span class="op">=</span> mcmc.get_samples()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Sample: 100%|██████████| 4000/4000 [01:23, 47.85it/s, step size=2.66e-01, acc. prob=0.934]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+                      mean       std    median      5.0%     95.0%     n_eff     r_hat
+               a     -0.05      0.10     -0.05     -0.22      0.10   2892.05      1.00
+              bA     -0.61      0.16     -0.61     -0.87     -0.35   1764.01      1.00
+              bM      0.06      0.17      0.06     -0.22      0.32   1698.03      1.00
+ divorce_rate[0]      1.15      0.37      1.14      0.52      1.73   4101.30      1.00
+ divorce_rate[1]      0.68      0.54      0.66     -0.20      1.52   4700.64      1.00
+ divorce_rate[2]      0.43      0.33      0.43     -0.09      1.00   5579.89      1.00
+ divorce_rate[3]      1.41      0.45      1.40      0.64      2.15   4928.70      1.00
+ divorce_rate[4]     -0.90      0.13     -0.90     -1.10     -0.68   5104.04      1.00
+ divorce_rate[5]      0.65      0.40      0.64      0.01      1.33   4066.76      1.00
+ divorce_rate[6]     -1.36      0.35     -1.35     -2.00     -0.83   5605.81      1.00
+ divorce_rate[7]     -0.32      0.49     -0.31     -1.12      0.47   4610.33      1.00
+ divorce_rate[8]     -1.88      0.60     -1.88     -2.85     -0.92   2866.64      1.00
+ divorce_rate[9]     -0.62      0.17     -0.62     -0.89     -0.34   5923.41      1.00
+divorce_rate[10]      0.75      0.29      0.75      0.28      1.23   4697.33      1.00
+divorce_rate[11]     -0.53      0.48     -0.53     -1.39      0.22   3437.37      1.00
+divorce_rate[12]      0.21      0.49      0.22     -0.57      1.03   2057.42      1.00
+divorce_rate[13]     -0.86      0.23     -0.86     -1.27     -0.53   7300.48      1.00
+divorce_rate[14]      0.55      0.31      0.55      0.01      1.04   4580.96      1.00
+divorce_rate[15]      0.28      0.38      0.29     -0.41      0.86   6245.29      1.00
+divorce_rate[16]      0.50      0.43      0.50     -0.20      1.20   5173.23      1.00
+divorce_rate[17]      1.24      0.35      1.23      0.72      1.85   3672.41      1.00
+divorce_rate[18]      0.42      0.38      0.41     -0.18      1.06   5871.63      1.00
+divorce_rate[19]      0.38      0.53      0.37     -0.48      1.24   2655.37      1.00
+divorce_rate[20]     -0.56      0.31     -0.56     -1.05     -0.03   4313.36      1.00
+divorce_rate[21]     -1.10      0.27     -1.10     -1.51     -0.64   4575.67      1.00
+divorce_rate[22]     -0.27      0.26     -0.27     -0.70      0.15   5345.20      1.00
+divorce_rate[23]     -1.00      0.30     -1.00     -1.47     -0.50   4594.95      1.00
+divorce_rate[24]      0.42      0.41      0.40     -0.24      1.08   4888.42      1.00
+divorce_rate[25]     -0.03      0.30     -0.02     -0.52      0.47   5341.36      1.00
+divorce_rate[26]     -0.03      0.50     -0.03     -0.78      0.84   4283.69      1.00
+divorce_rate[27]     -0.15      0.39     -0.14     -0.78      0.49   4833.08      1.00
+divorce_rate[28]     -0.27      0.49     -0.27     -1.08      0.54   3475.12      1.00
+divorce_rate[29]     -1.79      0.23     -1.79     -2.17     -1.41   5616.94      1.00
+divorce_rate[30]      0.18      0.42      0.17     -0.53      0.85   5533.95      1.00
+divorce_rate[31]     -1.66      0.17     -1.66     -1.94     -1.39   5818.72      1.00
+divorce_rate[32]      0.12      0.24      0.12     -0.28      0.51   5921.18      1.00
+divorce_rate[33]     -0.03      0.50     -0.00     -0.82      0.84   3123.85      1.00
+divorce_rate[34]     -0.12      0.22     -0.12     -0.49      0.22   4427.76      1.00
+divorce_rate[35]      1.26      0.40      1.25      0.61      1.90   4695.57      1.00
+divorce_rate[36]      0.22      0.35      0.22     -0.34      0.82   5018.34      1.00
+divorce_rate[37]     -1.03      0.22     -1.03     -1.36     -0.66   4955.84      1.00
+divorce_rate[38]     -0.93      0.54     -0.95     -1.91     -0.12   3953.88      1.00
+divorce_rate[39]     -0.68      0.32     -0.67     -1.23     -0.18   6472.10      1.00
+divorce_rate[40]      0.24      0.54      0.24     -0.59      1.20   4899.75      1.00
+divorce_rate[41]      0.74      0.34      0.73      0.17      1.30   3620.41      1.00
+divorce_rate[42]      0.20      0.18      0.19     -0.10      0.51   6072.49      1.00
+divorce_rate[43]      0.82      0.43      0.82      0.13      1.54   3248.31      1.00
+divorce_rate[44]     -0.42      0.53     -0.41     -1.27      0.44   4783.05      1.00
+divorce_rate[45]     -0.39      0.26     -0.39     -0.87     -0.01   6733.07      1.00
+divorce_rate[46]      0.13      0.29      0.13     -0.37      0.58   6125.59      1.00
+divorce_rate[47]      0.56      0.46      0.55     -0.15      1.32   5691.95      1.00
+divorce_rate[48]     -0.63      0.28     -0.63     -1.11     -0.21   4968.47      1.00
+divorce_rate[49]      0.87      0.57      0.88     -0.09      1.78   2810.28      1.00
+           sigma      0.58      0.11      0.57      0.38      0.73   1217.76      1.00
+
+Number of divergences: 0</code></pre>
+</div>
+</div>
+<section id="effect-of-incorporating-measurement-noise-on-residuals" class="level3">
+<h3 class="anchored" data-anchor-id="effect-of-incorporating-measurement-noise-on-residuals"><a id="Effect-of-Incorporating-Measurement-Noise-on-Residuals">Effect of Incorporating Measurement Noise on Residuals</a></h3>
+<p>Notice that our values for the regression coefficients is very similar to Model 3. However, introducing measurement noise allows us to more closely match our predictive distribution to the observed values. We can see this if we plot the residuals as earlier.</p>
+<div class="cell" data-execution_count="70">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Predictions for Model SE</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>predictive_4 <span class="op">=</span> Predictive(model_se, samples_4)</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>predictions_4 <span class="op">=</span> predictive_4(</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>    marriage<span class="op">=</span>torch.tensor(dset.MarriageScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>), </span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>    age<span class="op">=</span>torch.tensor(dset.AgeScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>),</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>    divorce_sd<span class="op">=</span>torch.tensor(dset.DivorceScaledSD.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>),</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>    )[<span class="st">"obs"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="71">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>sd <span class="op">=</span> torch.tensor(dset.DivorceScaledSD.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>)</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>residuals_4 <span class="op">=</span> torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>) <span class="op">-</span> predictions_4</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>residuals_mean <span class="op">=</span> torch.mean(residuals_4, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>residuals_hpdi <span class="op">=</span> stats.hpdi(residuals_4, <span class="fl">0.9</span>)</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>err <span class="op">=</span> residuals_hpdi[<span class="dv">1</span>] <span class="op">-</span> residuals_mean</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>idx <span class="op">=</span> torch.argsort(residuals_mean)</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> torch.arange(<span class="dv">50</span>)</span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(nrows<span class="op">=</span><span class="dv">1</span>, ncols<span class="op">=</span><span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">16</span>))</span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot Residuals</span></span>
+<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>ax.plot(torch.zeros(<span class="dv">50</span>), y, <span class="st">"--"</span>)</span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>ax.errorbar(</span>
+<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a>    residuals_mean[idx], y, xerr<span class="op">=</span>err[idx], marker<span class="op">=</span><span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">5</span>, mew<span class="op">=</span><span class="dv">4</span>, ls<span class="op">=</span><span class="st">"none"</span>, alpha<span class="op">=</span><span class="fl">0.8</span></span>
+<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot SD</span></span>
+<span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a>ax.errorbar(residuals_mean[idx], y, xerr<span class="op">=</span>sd[idx], ls<span class="op">=</span><span class="st">"none"</span>, color<span class="op">=</span><span class="st">"orange"</span>, alpha<span class="op">=</span><span class="fl">0.9</span>)</span>
+<span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-20"><a href="#cb47-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot earlier mean residual</span></span>
+<span id="cb47-21"><a href="#cb47-21" aria-hidden="true" tabindex="-1"></a>ax.plot(</span>
+<span id="cb47-22"><a href="#cb47-22" aria-hidden="true" tabindex="-1"></a>    torch.mean(torch.tensor(dset.DivorceScaled.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>) <span class="op">-</span> predictions_3, <span class="dv">0</span>)[idx],</span>
+<span id="cb47-23"><a href="#cb47-23" aria-hidden="true" tabindex="-1"></a>    y,</span>
+<span id="cb47-24"><a href="#cb47-24" aria-hidden="true" tabindex="-1"></a>    ls<span class="op">=</span><span class="st">"none"</span>,</span>
+<span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
+<span id="cb47-26"><a href="#cb47-26" aria-hidden="true" tabindex="-1"></a>    ms<span class="op">=</span><span class="dv">6</span>,</span>
+<span id="cb47-27"><a href="#cb47-27" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"black"</span>,</span>
+<span id="cb47-28"><a href="#cb47-28" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.6</span>,</span>
+<span id="cb47-29"><a href="#cb47-29" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb47-30"><a href="#cb47-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-31"><a href="#cb47-31" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"Residuals"</span>, ylabel<span class="op">=</span><span class="st">"State"</span>, title<span class="op">=</span><span class="st">"Residuals with 90% CI"</span>)</span>
+<span id="cb47-32"><a href="#cb47-32" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(y)</span>
+<span id="cb47-33"><a href="#cb47-33" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels(dset.Loc.values[idx], fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb47-34"><a href="#cb47-34" aria-hidden="true" tabindex="-1"></a>ax.text(</span>
+<span id="cb47-35"><a href="#cb47-35" aria-hidden="true" tabindex="-1"></a>    <span class="op">-</span><span class="fl">2.8</span>,</span>
+<span id="cb47-36"><a href="#cb47-36" aria-hidden="true" tabindex="-1"></a>    <span class="op">-</span><span class="dv">7</span>,</span>
+<span id="cb47-37"><a href="#cb47-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Residuals (with error-bars) from current model (in red). "</span></span>
+<span id="cb47-38"><a href="#cb47-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Black marker </span><span class="ch">\n</span><span class="st">shows residuals from the previous model (Model 3). "</span></span>
+<span id="cb47-39"><a href="#cb47-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Measurement </span><span class="ch">\n</span><span class="st">error is indicated by orange bar."</span>,</span>
+<span id="cb47-40"><a href="#cb47-40" aria-hidden="true" tabindex="-1"></a>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-36-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>The plot above shows the residuals for each of the states, along with the measurement noise given by inner error bar. The gray dots are the mean residuals from our earlier Model 3. Notice how having an additional degree of freedom to model the measurement noise has shrunk the residuals. In particular, for Idaho and Maine, our predictions are now much closer to the observed values after incorporating measurement noise in the model.</p>
+<p>To better see how measurement noise affects the movement of the regression line, let us plot the residuals with respect to the measurement noise.</p>
+<div class="cell" data-execution_count="72">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(nrows<span class="op">=</span><span class="dv">1</span>, ncols<span class="op">=</span><span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>))</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> torch.tensor(dset.DivorceScaledSD.values, dtype<span class="op">=</span>torch.<span class="bu">float</span>)</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> torch.mean(residuals_3, <span class="dv">0</span>)</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> torch.mean(residuals_4, <span class="dv">0</span>)</span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>ax.plot(x, y1, ls<span class="op">=</span><span class="st">"none"</span>, marker<span class="op">=</span><span class="st">"o"</span>)</span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>ax.plot(x, y2, ls<span class="op">=</span><span class="st">"none"</span>, marker<span class="op">=</span><span class="st">"o"</span>)</span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, (j, k) <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">zip</span>(y1, y2)):</span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>    ax.plot([x[i], x[i]], [j, k], <span class="st">"--"</span>, color<span class="op">=</span><span class="st">"gray"</span>)</span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>ax.<span class="bu">set</span>(</span>
+<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>    xlabel<span class="op">=</span><span class="st">"Measurement Noise"</span>,</span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>    ylabel<span class="op">=</span><span class="st">"Residual"</span>,</span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Mean residuals (Model 4: red, Model 3: blue)"</span>,</span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-37-output-1.png" class="img-fluid"></p>
+</div>
+</div>
+<p>The plot above shows what has happened in more detail - the regression line itself has moved to ensure a better fit for observations with low measurement noise (left of the plot) where the residuals have shrunk very close to 0. That is to say that data points with low measurement error have a concomitantly higher contribution in determining the regression line. On the other hand, for states with high measurement error (right of the plot), incorporating measurement noise allows us to move our posterior distribution mass closer to the observations resulting in a shrinkage of residuals as well.</p>
+</section>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references"><a id="References">References</a><a></a></h2><a>
+</a><ol type="1"><a>
+<li>McElreath, R. (2016). Statistical Rethinking: A Bayesian Course with Examples in R and Stan CRC Press.</li>
+</a><li><a>Stan Development Team. </a><a href="https://mc-stan.org/docs/2_19/stan-users-guide/index.html">Stan User’s Guide</a></li>
+<li>Goodman, N.D., and StuhlMueller, A. (2014). <a href="http://dippl.org/">The Design and Implementation of Probabilistic Programming Languages</a></li>
+<li>Pyro Development Team. <a href="http://pyro.ai/examples/effect_handlers.html">Poutine: A Guide to Programming with Effect Handlers in Pyro</a></li>
+<li>Hoffman, M.D., Gelman, A. (2011). The No-U-Turn Sampler: Adaptively Setting Path Lengths in Hamiltonian Monte Carlo.</li>
+<li>Betancourt, M. (2017). A Conceptual Introduction to Hamiltonian Monte Carlo.</li>
+<li>JAX Development Team (2018). <a href="https://github.com/google/jax">Composable transformations of Python+NumPy programs: differentiate, vectorize, JIT to GPU/TPU, and more</a></li>
+<li>Gelman, A., Hwang, J., and Vehtari A. <a href="https://arxiv.org/pdf/1307.5928.pdf">Understanding predictive information criteria for Bayesian models</a></li>
+</ol>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+<script src="../../site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

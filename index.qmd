@@ -1,0 +1,30 @@
+---
+title: "Arijeet Chatterjee"
+description: "Random musings"
+about:
+  template: jolla
+#   image: profile.jpg
+  links:
+    # - icon: twitter
+    #   text: twitter
+    #   href: https://twitter.com
+    - icon: github
+      text: Github
+      href: https://github.com
+    - icon: linkedin
+      text: LinkedIn
+      href: https://linkedin.com
+    - icon: Mastodon
+      text: Mastodon
+      href: https://m.com
+---
+
+I am a data scientist interested in machine learning and decision making.
+
+## Education
+
+University of British Columbia | Vancouver, Canada
+Master of Data Science | Sept 2021 - June 2022
+
+HEC Paris | France
+MBA | Sept 2008 - May 2010

@@ -1,0 +1,9 @@
+---
+- title: "Bayesian Regression Using Pyro"
+    description: |
+        An example of Bayesian regression adapted from a NumPyro tutorial. In this tutorial I use Pyro.
+        This tutorial was developed as an open source contribution for Pyro. 
+    date: 2023-04-08
+    href: "bayes-regression/bayesian_regression_mcmc_and_svi.ipynb"
+    categories: [Bayesian Regression, Pyro]
+---
