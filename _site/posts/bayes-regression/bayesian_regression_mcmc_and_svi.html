@@ -206,8 +206,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#bayesian-regression-using-pyro" id="toc-bayesian-regression-using-pyro" class="nav-link active" data-scroll-target="#bayesian-regression-using-pyro">Bayesian Regression Using Pyro</a>
   <ul class="collapse">
   <li><a href="#tutorial-outline" id="toc-tutorial-outline" class="nav-link" data-scroll-target="#tutorial-outline">Tutorial Outline:</a></li>
-  <li><a href="#dataset" id="toc-dataset" class="nav-link" data-scroll-target="#dataset"></a><a id="Dataset" class="nav-link" data-scroll-target="undefined">Dataset</a></li>
-  <li><a href="#regression-model-to-predict-divorce-rate" id="toc-regression-model-to-predict-divorce-rate" class="nav-link" data-scroll-target="#regression-model-to-predict-divorce-rate"></a><a id="#Regression-Model-to-Predict-Divorce-Rate" class="nav-link" data-scroll-target="undefined">Regression Model to Predict Divorce Rate</a>
+  <li><a href="#dataset" id="toc-dataset" class="nav-link" data-scroll-target="#dataset"></a><a id="dataset" class="nav-link" data-scroll-target="undefined">Dataset</a></li>
+  <li><a href="#regression-model-to-predict-divorce-rate" id="toc-regression-model-to-predict-divorce-rate" class="nav-link" data-scroll-target="#regression-model-to-predict-divorce-rate"></a><a id="#regression-model-to-predict-divorce-rate" class="nav-link" data-scroll-target="undefined">Regression Model to Predict Divorce Rate</a>
   <ul class="collapse">
   <li><a href="#model-1-predictor---marriage-rate" id="toc-model-1-predictor---marriage-rate" class="nav-link" data-scroll-target="#model-1-predictor---marriage-rate"></a><a id="Model-1:-Predictor---Marriage-Rate" class="nav-link" data-scroll-target="undefined">Model 1: Predictor - Marriage Rate</a></li>
   <li><a href="#posterior-predictive-distribution" id="toc-posterior-predictive-distribution" class="nav-link" data-scroll-target="#posterior-predictive-distribution"></a><a id="Posterior-Predictive-Distribution" class="nav-link" data-scroll-target="undefined">Posterior Predictive Distribution</a></li>
@@ -219,7 +219,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <ul class="collapse">
   <li><a href="#effect-of-incorporating-measurement-noise-on-residuals" id="toc-effect-of-incorporating-measurement-noise-on-residuals" class="nav-link" data-scroll-target="#effect-of-incorporating-measurement-noise-on-residuals"></a><a id="Effect-of-Incorporating-Measurement-Noise-on-Residuals" class="nav-link" data-scroll-target="undefined">Effect of Incorporating Measurement Noise on Residuals</a></li>
   </ul></li>
-  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"></a><a id="References" class="nav-link" data-scroll-target="undefined">References</a><a class="nav-link" data-scroll-target="undefined"></a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"></a><a id="references" class="nav-link" data-scroll-target="undefined">References</a><a class="nav-link" data-scroll-target="undefined"></a></li>
   </ul></li>
   </ul>
 </nav>
@@ -232,7 +232,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <section id="bayesian-regression-using-pyro" class="level1">
 <h1>Bayesian Regression Using Pyro</h1>
-<p>In this tutorial, we will explore how to do bayesian regression in Pyro, using a simple example adapted from Statistical Rethinking [<a href="#References">1</a>]. In particular, we would like to explore the following:</p>
+<p>In this tutorial, we will explore how to do bayesian regression in Pyro, using a simple example adapted from Statistical Rethinking [<a href="#references">1</a>]. In particular, we would like to explore the following:</p>
 <ul>
 <li>Write a simple model using the sample Pyro primitive.</li>
 <li>Run inference using MCMC in Pyro, in particular, using the No U-Turn Sampler (NUTS) to get a posterior distribution over our regression parameters of interest. We also show an example of inference using Pyro’s SVI.</li>
@@ -242,8 +242,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <section id="tutorial-outline" class="level2">
 <h2 class="anchored" data-anchor-id="tutorial-outline">Tutorial Outline:</h2>
 <ol type="1">
-<li><a href="#Dataset">Dataset</a></li>
-<li><a href="#Regression-Model-to-Predict-Divorce-Rate">Regression Model to Predict Divorce Rate</a>
+<li><a href="#dataset">Dataset</a></li>
+<li><a href="#regression-model-to-predict-divorce-rate">Regression Model to Predict Divorce Rate</a>
 <ul>
 <li><a href="#Model-1:-Predictor---Marriage-Rate">Model-1: Predictor-Marriage Rate</a>
 <ul>
@@ -262,7 +262,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <ul>
 <li><a href="#Effect-of-Incorporating-Measurement-Noise-on-Residuals">Effect of Incorporating Measurement Noise on Residuals</a></li>
 </ul></li>
-<li><a href="#References">References</a></li>
+<li><a href="#references">References</a></li>
 </ol>
 <div class="cell" data-execution_count="37">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
@@ -290,8 +290,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </section>
 <section id="dataset" class="level2">
-<h2 class="anchored" data-anchor-id="dataset"><a id="Dataset">Dataset</a></h2>
-<p>For this example, we will use the WaffleDivorce dataset from Chapter 05, Statistical Rethinking [<a href="#References">1</a>]. The dataset contains divorce rates in each of the 50 states in the USA, along with predictors such as population, median age of marriage, whether it is a Southern state and, curiously, number of Waffle Houses.</p>
+<h2 class="anchored" data-anchor-id="dataset"><a id="dataset">Dataset</a></h2>
+<p>For this example, we will use the WaffleDivorce dataset from Chapter 05, Statistical Rethinking [<a href="#references">1</a>]. The dataset contains divorce rates in each of the 50 states in the USA, along with predictors such as population, median age of marriage, whether it is a Southern state and, curiously, number of Waffle Houses.</p>
 <div class="cell" data-execution_count="38">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>DATASET_URL <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/rmcelreath/rethinking/master/data/WaffleDivorce.csv"</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dset <span class="op">=</span> pd.read_csv(DATASET_URL, sep<span class="op">=</span><span class="st">";"</span>)</span>
@@ -428,11 +428,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p><img src="bayesian_regression_mcmc_and_svi_files/figure-html/cell-5-output-1.png" class="img-fluid"></p>
 </div>
 </div>
-<p>This is an example of a spurious association. We do not expect the number of Waffle Houses in a state to affect the divorce rate, but it is likely correlated with other factors that have an effect on the divorce rate. We will not delve into this spurious association in this tutorial, but the interested reader is encouraged to read Chapters 5 and 6 of [<a href="#References">1</a>] which explores the problem of causal association in the presence of multiple predictors.</p>
+<p>This is an example of a spurious association. We do not expect the number of Waffle Houses in a state to affect the divorce rate, but it is likely correlated with other factors that have an effect on the divorce rate. We will not delve into this spurious association in this tutorial, but the interested reader is encouraged to read Chapters 5 and 6 of [<a href="#references">1</a>] which explores the problem of causal association in the presence of multiple predictors.</p>
 <p>For simplicity, we will primarily focus on marriage rate and the median age of marriage as our predictors for divorce rate throughout the remaining tutorial.</p>
 </section>
 <section id="regression-model-to-predict-divorce-rate" class="level2">
-<h2 class="anchored" data-anchor-id="regression-model-to-predict-divorce-rate"><a id="#Regression-Model-to-Predict-Divorce-Rate">Regression Model to Predict Divorce Rate</a></h2>
+<h2 class="anchored" data-anchor-id="regression-model-to-predict-divorce-rate"><a id="#regression-model-to-predict-divorce-rate">Regression Model to Predict Divorce Rate</a></h2>
 <p>Let us now write a regression model in <em>Pyro</em> to predict the divorce rate as a linear function of marriage rate and median age of marriage in each of the states.</p>
 <p>First, note that our predictor variables have somewhat different scales. It is a good practice to standardize our predictors and response variables to mean <code>0</code> and standard deviation <code>1</code>, which should result in <a href="https://mc-stan.org/docs/2_19/stan-users-guide/standardizing-predictors-and-outputs.html">faster inference</a>.</p>
 <div class="cell" data-execution_count="41">
@@ -445,7 +445,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>We write the Pyro model as follows. While the code should largely be self-explanatory, take note of the following:</p>
 <ul>
 <li>In Pyro, model code is any Python callable which can optionally accept additional arguments and keywords. For HMC which we will be using for this tutorial, these arguments and keywords remain static during inference, but we can reuse the same model to generate <a href="#Posterior-Predictive-Distribution">predictions</a> on new data.</li>
-<li>In addition to regular Python statements, the model code also contains primitives like <code>sample</code>. These primitives can be interpreted with various side-effects using effect handlers. For more on effect handlers, refer to [<a href="#References">3</a>], [<a href="#References">4</a>]. For now, just remember that a <code>sample</code> statement makes this a stochastic function that samples some latent parameters from a <em>prior distribution</em>. Our goal is to infer the <em>posterior distribution</em> of these parameters conditioned on observed data.</li>
+<li>In addition to regular Python statements, the model code also contains primitives like <code>sample</code>. These primitives can be interpreted with various side-effects using effect handlers. For more on effect handlers, refer to [<a href="#references">3</a>], [<a href="#references">4</a>]. For now, just remember that a <code>sample</code> statement makes this a stochastic function that samples some latent parameters from a <em>prior distribution</em>. Our goal is to infer the <em>posterior distribution</em> of these parameters conditioned on observed data.</li>
 <li>The reason why we have kept our predictors as optional keyword arguments is to be able to reuse the same model as we vary the set of predictors. Likewise, the reason why the response variable is optional is that we would like to reuse this model to sample from the posterior predictive distribution. See the <a href="#Posterior-Predictive-Distribution">section</a> on plotting the posterior predictive distribution, as an example.</li>
 </ul>
 <div class="cell" data-execution_count="42">
@@ -469,7 +469,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 <section id="model-1-predictor---marriage-rate" class="level3">
 <h3 class="anchored" data-anchor-id="model-1-predictor---marriage-rate"><a id="Model-1:-Predictor---Marriage-Rate">Model 1: Predictor - Marriage Rate</a></h3>
-<p>We first try to model the divorce rate as depending on a single variable, marriage rate. As mentioned above, we can use the same <code>model</code> code as earlier, but only pass values for <code>marriage</code> and <code>divorce</code> keyword arguments. We will use the No U-Turn Sampler (see [<a href="#References">5</a>] for more details on the NUTS algorithm) to run inference on this simple model.</p>
+<p>We first try to model the divorce rate as depending on a single variable, marriage rate. As mentioned above, we can use the same <code>model</code> code as earlier, but only pass values for <code>marriage</code> and <code>divorce</code> keyword arguments. We will use the No U-Turn Sampler (see [<a href="#references">5</a>] for more details on the NUTS algorithm) to run inference on this simple model.</p>
 <p>The Hamiltonian Monte Carlo (or, the NUTS) implementation in Pyro takes in a potential energy function. This is the negative log joint density for the model. Therefore, for our model description above, we need to construct a function which given the parameter values returns the potential energy (or negative log joint density). Additionally, the verlet integrator in HMC (or, NUTS) returns sample values simulated using Hamiltonian dynamics in the unconstrained space. As such, continuous variables with bounded support need to be transformed into unconstrained space using bijective transforms. We also need to transform these samples back to their constrained support before returning these values to the user. Thankfully, this is handled on the backend for us, within a convenience class for doing <a href="https://docs.pyro.ai/en/stable/mcmc.html">MCMC inference</a> that has the following methods:</p>
 <ul>
 <li><code>run(...)</code>: runs warmup, adapts steps size and mass matrix, and does sampling using the sample from the warmup phase.</li>
@@ -510,7 +510,7 @@ Number of divergences: 0</code></pre>
 <section id="posterior-distribution-over-the-regression-parameters" class="level4">
 <h4 class="anchored" data-anchor-id="posterior-distribution-over-the-regression-parameters"><a id="Posterior-Distribution-over-the-Regression-Parameters">Posterior Distribution over the Regression Parameters</a></h4>
 <p>We notice that the progress bar gives us online statistics on the acceptance probability, step size and number of steps taken per sample while running NUTS. In particular, during warmup, we adapt the step size and mass matrix to achieve a certain target acceptance probability which is 0.8, by default. We were able to successfully adapt our step size to achieve this target in the warmup phase.</p>
-<p>During warmup, the aim is to adapt hyper-parameters such as step size and mass matrix (the HMC algorithm is very sensitive to these hyper-parameters), and to reach the typical set (see [<a href="#References">6</a>] for more details). If there are any issues in the model specification, the first signal to notice would be low acceptance probabilities or very high number of steps. We use the sample from the end of the warmup phase to seed the MCMC chain (denoted by the second sample progress bar) from which we generate the desired number of samples from our target distribution.</p>
+<p>During warmup, the aim is to adapt hyper-parameters such as step size and mass matrix (the HMC algorithm is very sensitive to these hyper-parameters), and to reach the typical set (see [<a href="#references">6</a>] for more details). If there are any issues in the model specification, the first signal to notice would be low acceptance probabilities or very high number of steps. We use the sample from the end of the warmup phase to seed the MCMC chain (denoted by the second sample progress bar) from which we generate the desired number of samples from our target distribution.</p>
 <p>At the end of inference, Pyro prints the mean, std and 90% CI values for each of the latent parameters. Note that since we standardized our predictors and response variable, we would expect the intercept to have mean 0, as can be seen here. It also prints other convergence diagnostics on the latent parameters in the model, <a href="https://docs.pyro.ai/en/1.8.0/ops.html?highlight=effective_sample_size#pyro.ops.stats.effective_sample_size">effective sample size</a> and the <a href="https://docs.pyro.ai/en/1.8.0/ops.html?highlight=gelman%20rubin#pyro.ops.stats.gelman_rubin">gelman rubin diagnostic</a> (<span class="math inline">\(\hat{R}\)</span>). The value for these diagnostics indicates that the chain has converged to the target distribution. In our case, the “target distribution” is the posterior distribution over the latent parameters that we are interested in. Note that this is often worth verifying with multiple chains for more complicated models. In the end, <code>samples_1</code> is a collection (in our case, a <code>dict</code> since <code>init_samples</code> was a <code>dict</code>) containing samples from the posterior distribution for each of the latent parameters in the model.</p>
 <p>To look at our regression fit, let us plot the regression line using our posterior estimates for the regression parameters, along with the 90% Credibility Interval (CI). Note that the <a href="https://docs.pyro.ai/en/stable/ops.html?highlight=hpdi#pyro.ops.stats.hpdi">hpdi</a> function in Pyro’s <code>Statistical Utilities</code> module can be used to compute CI. In the functions below, note that the collected samples from the posterior are all along the leading axis.</p>
 <div class="cell" data-execution_count="45">
@@ -703,7 +703,7 @@ Number of divergences: 0</code></pre>
 </section>
 <section id="model-predictive-density" class="level4">
 <h4 class="anchored" data-anchor-id="model-predictive-density"><a id="Model-Predictive-Density">Model Predictive Density</a></h4>
-<p>Likewise, making use of effect-handlers, we can also compute the log likelihood for this model given the dataset, and the log posterior predictive density [<a href="#References">6</a>] which is given by <span class="math display">\[ log \prod_{i=1}^{n} \int p(y_i | \theta) p_{post}(\theta) d\theta
+<p>Likewise, making use of effect-handlers, we can also compute the log likelihood for this model given the dataset, and the log posterior predictive density [<a href="#references">6</a>] which is given by <span class="math display">\[ log \prod_{i=1}^{n} \int p(y_i | \theta) p_{post}(\theta) d\theta
 \approx \sum_{i=1}^n log \frac{\sum_s p(\theta^{s})}{S} \\
 = \sum_{i=1}^n (log \sum_s p(\theta^{s}) - log(S))
 \]</span>.</p>
@@ -1024,7 +1024,7 @@ Number of divergences: 0</code></pre>
 </section>
 <section id="regression-model-with-measurement-error" class="level2">
 <h2 class="anchored" data-anchor-id="regression-model-with-measurement-error"><a id="Regression-Model-with-Measurement-Error">Regression Model with Measurement Error</a></h2>
-<p>Note that in our previous models, each data point influences the regression line equally. Is this well justified? We will build on the previous model to incorporate measurement error given by <code>Divorce SE</code> variable in the dataset. Incorporating measurement noise will be useful in ensuring that observations that have higher confidence (i.e.&nbsp;lower measurement noise) have a greater impact on the regression line. On the other hand, this will also help us better model outliers with high measurement errors. For more details on modeling errors due to measurement noise, refer to Chapter 14 of [<a href="#References">1</a>].</p>
+<p>Note that in our previous models, each data point influences the regression line equally. Is this well justified? We will build on the previous model to incorporate measurement error given by <code>Divorce SE</code> variable in the dataset. Incorporating measurement noise will be useful in ensuring that observations that have higher confidence (i.e.&nbsp;lower measurement noise) have a greater impact on the regression line. On the other hand, this will also help us better model outliers with high measurement errors. For more details on modeling errors due to measurement noise, refer to Chapter 14 of [<a href="#references">1</a>].</p>
 <p>To do this, we will reuse Model 3, with the only change that the final observed value has a measurement error given by <code>divorce_sd</code> (notice that this has to be standardized since the <code>divorce</code> variable itself has been standardized to mean 0 and std 1).</p>
 <div class="cell" data-execution_count="67">
 <div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_se(marriage, age, divorce_sd, divorce<span class="op">=</span><span class="va">None</span>):</span>
@@ -1201,7 +1201,7 @@ Number of divergences: 0</code></pre>
 </section>
 </section>
 <section id="references" class="level2">
-<h2 class="anchored" data-anchor-id="references"><a id="References">References</a><a></a></h2><a>
+<h2 class="anchored" data-anchor-id="references"><a id="references">References</a><a></a></h2><a>
 </a><ol type="1"><a>
 <li>McElreath, R. (2016). Statistical Rethinking: A Bayesian Course with Examples in R and Stan CRC Press.</li>
 </a><li><a>Stan Development Team. </a><a href="https://mc-stan.org/docs/2_19/stan-users-guide/index.html">Stan User’s Guide</a></li>
