@@ -1,6 +1,6 @@
 ---
 title: "Arijeet Chatterjee"
-description: "Random musings"
+description: "Personal website and blog"
 about:
   template: jolla
 #   image: profile.jpg
@@ -10,21 +10,41 @@ about:
     #   href: https://twitter.com
     - icon: github
       text: Github
-      href: https://github.com
+      href: https://github.com/arijeetchatterjee
     - icon: linkedin
       text: LinkedIn
-      href: https://linkedin.com
+      href: https://www.linkedin.com/in/arichatterjee
     - icon: Mastodon
       text: Mastodon
-      href: https://m.com
+      href: https://sigmoid.social/@arijc
+    - icon: envelope
+      text: E-Mail
+      href: mailto:arijeet.chatterjee@gmail.com
 ---
 
-I am a data scientist interested in machine learning and decision making.
+I am currently a data scientist working on data science and machine learning projects in retail.
 
-## Education
+<!-- ### Education
 
-University of British Columbia | Vancouver, Canada
+::: {.d-flex .justify-content-between}
+::: {}
+**University of British Columbia**  
+Master of Data Science  
+:::
+::: {.text-end}
+Vancouver, Canada 
+
+::: {.d-flex .justify-content-between}
+::: {}
+**HEC Paris**  
+MBA  
+:::
+::: {.text-end}
+Jouy-en-Josas, France  -->
+
+
+<!-- University of British Columbia | Vancouver, Canada
 Master of Data Science | Sept 2021 - June 2022
 
 HEC Paris | France
-MBA | Sept 2008 - May 2010
+MBA | Sept 2008 - May 2010 -->
