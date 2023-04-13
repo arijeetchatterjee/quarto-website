@@ -22,7 +22,7 @@ about:
       href: mailto:arijeet.chatterjee@gmail.com
 ---
 
-I am currently a data scientist working on data science and machine learning projects in retail.
+I am currently working on data science and machine learning projects in retail.
 
 <!-- ### Education
 
