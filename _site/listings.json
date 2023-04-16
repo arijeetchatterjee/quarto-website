@@ -2,6 +2,7 @@
   {
     "listing": "/blog.html",
     "items": [
+      "/posts/multicollinearity/multicollinearity_index.html",
       "/posts/bayes-regression/bayesian_regression_mcmc_and_svi.html"
     ]
   }
