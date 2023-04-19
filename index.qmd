@@ -14,7 +14,7 @@ about:
     - icon: linkedin
       text: LinkedIn
       href: https://www.linkedin.com/in/arichatterjee
-    - icon: Mastodon
+    - icon: mastodon
       text: Mastodon
       href: https://sigmoid.social/@arijc
     - icon: envelope
@@ -28,6 +28,7 @@ I'm a data scientist, currently working on machine learning projects for invento
 
 - Machine Learning
 - Causal Inference
+- Reinforcement Learning
 - MLOps
 - Functional programming
 
